@@ -1,0 +1,144 @@
+rules:
+
+  # ── A03: Injection ────────────────────────────────────────────────────────
+
+  - id: java-sql-injection-statement
+    languages: [java]
+    severity: ERROR
+    message: >
+      SQL injection: Statement.execute/executeQuery with string concatenation.
+      Use PreparedStatement with parameterized queries.
+    pattern-either:
+      - pattern: $STMT.execute("..." + $X + "...")
+      - pattern: $STMT.executeQuery("..." + $X + "...")
+      - pattern: $STMT.executeUpdate("..." + $X + "...")
+    metadata:
+      cwe: ["CWE-89"]
+      owasp: ["A03:2021 - Injection"]
+      references: ["https://owasp.org/Top10/A03_2021-Injection/"]
+
+  - id: java-sql-injection-string-format
+    languages: [java]
+    severity: ERROR
+    message: >
+      SQL injection via String.format in SQL query. Use PreparedStatement parameters instead.
+    patterns:
+      - pattern: $STMT.execute(String.format(...))
+    metadata:
+      cwe: ["CWE-89"]
+      owasp: ["A03:2021 - Injection"]
+      references: ["https://owasp.org/Top10/A03_2021-Injection/"]
+
+  - id: java-xss-printwriter
+    languages: [java]
+    severity: ERROR
+    message: >
+      XSS: Servlet PrintWriter writes user-supplied request parameter directly to response.
+      Encode output with OWASP Java Encoder or use response.getWriter() with escaping.
+    pattern-either:
+      - pattern: $RESP.getWriter().println($REQ.getParameter(...))
+      - pattern: $OUT.print($REQ.getParameter(...))
+      - pattern: $OUT.println($REQ.getParameter(...))
+    metadata:
+      cwe: ["CWE-79"]
+      owasp: ["A03:2021 - Injection"]
+      references: ["https://owasp.org/Top10/A03_2021-Injection/"]
+
+  - id: java-command-injection-runtime
+    languages: [java]
+    severity: ERROR
+    message: >
+      Command injection: Runtime.exec() with string concatenation. Pass a String[]
+      argument array instead to prevent shell interpretation.
+    pattern-either:
+      - pattern: Runtime.getRuntime().exec("..." + $X + "...")
+      - pattern: Runtime.getRuntime().exec(new String[]{"sh", "-c", "..." + $X + "..."})
+    metadata:
+      cwe: ["CWE-78"]
+      owasp: ["A03:2021 - Injection"]
+      references: ["https://owasp.org/Top10/A03_2021-Injection/"]
+
+  # ── A01: Broken Access Control ────────────────────────────────────────────
+
+  - id: java-path-traversal-file
+    languages: [java]
+    severity: ERROR
+    message: >
+      Path traversal: new File() constructed with user-supplied request parameter.
+      Validate using Paths.get().normalize().startsWith(basePath).
+    pattern-either:
+      - pattern: new File($REQ.getParameter(...))
+      - pattern: new File("...", $REQ.getParameter(...))
+    metadata:
+      cwe: ["CWE-22"]
+      owasp: ["A01:2021 - Broken Access Control"]
+      references: ["https://owasp.org/Top10/A01_2021-Broken_Access_Control/"]
+
+  # ── A07: Authentication Failures ─────────────────────────────────────────
+
+  - id: java-hardcoded-password
+    languages: [java]
+    severity: ERROR
+    message: >
+      Hardcoded password or credential in source code. Use a secrets manager or
+      externalized configuration (environment variables, Vault, AWS Secrets Manager).
+    patterns:
+      - pattern: String $VAR = "..."
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: (?i)(password|passwd|secret|apiKey|api_key|token|credential)
+      - pattern-not: String $VAR = ""
+    metadata:
+      cwe: ["CWE-259", "CWE-798"]
+      owasp: ["A07:2021 - Identification and Authentication Failures"]
+      references: ["https://cwe.mitre.org/data/definitions/798.html"]
+
+  - id: java-weak-crypto-md5-des
+    languages: [java]
+    severity: ERROR
+    message: >
+      Weak cryptographic algorithm (MD5, DES, or ECB mode). Use AES-256-GCM for
+      encryption and SHA-256 or higher for hashing.
+    pattern-either:
+      - pattern: MessageDigest.getInstance("MD5")
+      - pattern: MessageDigest.getInstance("SHA-1")
+      - pattern: Cipher.getInstance("DES/...")
+      - pattern: Cipher.getInstance("DESede/...")
+      - pattern: Cipher.getInstance("AES/ECB/...")
+      - pattern: KeyGenerator.getInstance("DES")
+    metadata:
+      cwe: ["CWE-327"]
+      owasp: ["A02:2021 - Cryptographic Failures"]
+      references: ["https://owasp.org/Top10/A02_2021-Cryptographic_Failures/"]
+
+  # ── A08: Software Integrity Failures ──────────────────────────────────────
+
+  - id: java-insecure-deserialization-objectinputstream
+    languages: [java]
+    severity: ERROR
+    message: >
+      Insecure deserialization: ObjectInputStream.readObject() on untrusted data.
+      Use a serialization filter (ObjectInputFilter), or replace with JSON deserialization.
+    patterns:
+      - pattern: (ObjectInputStream $OIS).readObject()
+    metadata:
+      cwe: ["CWE-502"]
+      owasp: ["A08:2021 - Software and Data Integrity Failures"]
+      references: ["https://owasp.org/Top10/A08_2021-Software_and_Data_Integrity_Failures/"]
+
+  - id: java-xxe-documentbuilder
+    languages: [java]
+    severity: ERROR
+    message: >
+      XML External Entity (XXE): DocumentBuilderFactory without disabling external entity
+      processing. Set FEATURE_SECURE_PROCESSING and disable DOCTYPE declarations.
+    patterns:
+      - pattern: DocumentBuilderFactory.newInstance()
+      - pattern-not: |
+          $DBF = DocumentBuilderFactory.newInstance();
+          ...
+          $DBF.setFeature("http://xml.org/sax/features/external-general-entities", false);
+    metadata:
+      cwe: ["CWE-611"]
+      owasp: ["A03:2021 - Injection"]
+      references: ["https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html"]

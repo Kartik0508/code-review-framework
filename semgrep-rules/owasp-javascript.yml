@@ -1,0 +1,180 @@
+rules:
+
+  # ── A01: Broken Access Control ────────────────────────────────────────────
+
+  - id: js-path-traversal-path-join
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >
+      Path traversal: user-controlled request parameter used in path.join().
+      Validate and normalize the resolved path against an allowed base directory.
+    pattern-either:
+      - pattern: path.join(..., req.params.$X, ...)
+      - pattern: path.join(..., req.query.$X, ...)
+      - pattern: path.join(..., req.body.$X, ...)
+    metadata:
+      cwe: ["CWE-22"]
+      owasp: ["A01:2021 - Broken Access Control"]
+      references: ["https://owasp.org/Top10/A01_2021-Broken_Access_Control/"]
+
+  # ── A02: Cryptographic Failures ───────────────────────────────────────────
+
+  - id: js-hardcoded-api-key
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >
+      Hardcoded secret or API key detected. Move secrets to environment variables
+      or a secrets manager. Never commit credentials to source control.
+    patterns:
+      - pattern: const $VAR = "..."
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: (?i)(api_key|apikey|api_secret|password|passwd|token|secret|private_key|access_key)
+      - pattern-not: const $VAR = ""
+    metadata:
+      cwe: ["CWE-798", "CWE-259"]
+      owasp: ["A02:2021 - Cryptographic Failures"]
+      references: ["https://cwe.mitre.org/data/definitions/798.html"]
+
+  - id: js-weak-crypto-md5-sha1-password
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >
+      MD5 or SHA1 is cryptographically weak. Do not use for password hashing.
+      Use bcrypt, scrypt, or Argon2 instead.
+    pattern-either:
+      - pattern: crypto.createHash('md5')
+      - pattern: crypto.createHash('sha1')
+      - pattern: md5(...)
+    metadata:
+      cwe: ["CWE-327"]
+      owasp: ["A02:2021 - Cryptographic Failures"]
+      references: ["https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html"]
+
+  # ── A03: Injection ────────────────────────────────────────────────────────
+
+  - id: js-sql-injection-template-literal
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >
+      SQL injection: user input interpolated directly into SQL query string.
+      Use parameterized queries or a query builder with bound parameters.
+    pattern-either:
+      - pattern: $DB.query(`... ${$X} ...`)
+      - pattern: $DB.execute(`... ${$X} ...`)
+      - pattern: $POOL.query(`... ${req.$FIELD} ...`)
+    metadata:
+      cwe: ["CWE-89"]
+      owasp: ["A03:2021 - Injection"]
+      references: ["https://owasp.org/Top10/A03_2021-Injection/"]
+
+  - id: js-xss-innerhtml
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >
+      XSS: innerHTML set to user-controlled data. Use textContent or
+      DOMPurify.sanitize() before assigning to innerHTML.
+    pattern-either:
+      - pattern: $EL.innerHTML = $X
+      - pattern: document.write($X)
+    metadata:
+      cwe: ["CWE-79"]
+      owasp: ["A03:2021 - Injection"]
+      references: ["https://owasp.org/Top10/A03_2021-Injection/"]
+
+  - id: js-command-injection-exec
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >
+      Command injection: exec/execSync with string concatenation or template literal
+      containing user input. Use execFile with an argument array instead.
+    pattern-either:
+      - pattern: exec(`... ${$X} ...`)
+      - pattern: execSync(`... ${$X} ...`)
+      - pattern: exec("..." + $X + "...")
+    metadata:
+      cwe: ["CWE-78"]
+      owasp: ["A03:2021 - Injection"]
+      references: ["https://owasp.org/Top10/A03_2021-Injection/"]
+
+  - id: js-res-send-unescaped
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: >
+      Potential XSS: sending user-controlled input directly in HTTP response.
+      Escape output or use Content-Type application/json.
+    pattern-either:
+      - pattern: res.send(req.query.$X)
+      - pattern: res.send(req.params.$X)
+      - pattern: res.send(req.body.$X)
+    metadata:
+      cwe: ["CWE-79"]
+      owasp: ["A03:2021 - Injection"]
+      references: ["https://owasp.org/Top10/A03_2021-Injection/"]
+
+  # ── A05: Security Misconfiguration ────────────────────────────────────────
+
+  - id: js-eval-usage
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >
+      eval() is dangerous and enables code injection. Avoid eval() entirely.
+      Use JSON.parse() for data, or safer alternatives for dynamic logic.
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: new Function(...)
+    metadata:
+      cwe: ["CWE-95"]
+      owasp: ["A05:2021 - Security Misconfiguration"]
+      references: ["https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval#never_use_eval!"]
+
+  # ── A07: Authentication Failures ─────────────────────────────────────────
+
+  - id: js-jwt-none-algorithm
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >
+      JWT verification without specifying allowed algorithms. An attacker could
+      use the 'none' algorithm to forge tokens. Always specify algorithms: ['HS256'].
+    patterns:
+      - pattern: jwt.verify($TOKEN, $SECRET)
+      - pattern-not: jwt.verify($TOKEN, $SECRET, {algorithms: [...]}, ...)
+    metadata:
+      cwe: ["CWE-347"]
+      owasp: ["A07:2021 - Identification and Authentication Failures"]
+      references: ["https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/"]
+
+  # ── A08: Prototype Pollution ──────────────────────────────────────────────
+
+  - id: js-prototype-pollution
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: >
+      Potential prototype pollution: dynamic property assignment with user-controlled key.
+      Validate that the key is not '__proto__', 'constructor', or 'prototype'.
+    pattern-either:
+      - pattern: $OBJ[req.body.$KEY] = $VAL
+      - pattern: $OBJ[req.query.$KEY] = $VAL
+      - pattern: $OBJ[req.params.$KEY] = $VAL
+    metadata:
+      cwe: ["CWE-1321"]
+      owasp: ["A08:2021 - Software and Data Integrity Failures"]
+      references: ["https://portswigger.net/web-security/prototype-pollution"]
+
+  # ── A09: Logging Failures ────────────────────────────────────────────────
+
+  - id: js-logging-sensitive-data
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: >
+      Potential logging of sensitive data such as passwords or tokens.
+      Remove sensitive fields before logging request/response objects.
+    patterns:
+      - pattern: console.log(..., $VAR, ...)
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: (?i)(password|passwd|token|secret|api_key|credential)
+    metadata:
+      cwe: ["CWE-532"]
+      owasp: ["A09:2021 - Security Logging and Monitoring Failures"]
+      references: ["https://owasp.org/Top10/A09_2021-Security_Logging_and_Monitoring_Failures/"]

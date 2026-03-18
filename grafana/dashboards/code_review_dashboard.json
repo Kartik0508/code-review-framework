@@ -1,0 +1,288 @@
+{
+  "uid": "code-review-main",
+  "title": "Code Review Security Dashboard",
+  "description": "Security vulnerability tracking across all projects and scanners",
+  "tags": ["security", "code-review", "vulnerabilities"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "5m",
+  "time": { "from": "now-30d", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Total Open Issues",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 10 },
+              { "color": "red", "value": 50 }
+            ]
+          },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) as \"Total Open Issues\" FROM issues WHERE status = 'open'",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Critical Issues",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 1 },
+              { "color": "red", "value": 5 }
+            ]
+          },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) as \"Critical Issues\" FROM issues WHERE status = 'open' AND severity = 'CRITICAL'",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "High Issues",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5 },
+              { "color": "orange", "value": 20 }
+            ]
+          },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) as \"High Issues\" FROM issues WHERE status = 'open' AND severity = 'HIGH'",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Total Scans Run",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "blue", "value": null }]
+          },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) as \"Total Scans\" FROM scan_results WHERE status = 'completed'",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Projects Monitored",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "blue", "value": null }]
+          },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) as \"Projects\" FROM projects WHERE is_active = true",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "barchart",
+      "title": "Issues by Severity",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 4 },
+      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "options": {
+        "orientation": "vertical",
+        "xTickLabelRotation": 0,
+        "fillOpacity": 80
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "fillOpacity": 80 }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "CRITICAL" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "HIGH" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "MEDIUM" }, "properties": [{ "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "LOW" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] }
+        ]
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT severity, COUNT(*) as count FROM issues WHERE status = 'open' GROUP BY severity ORDER BY CASE severity WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'MEDIUM' THEN 3 WHEN 'LOW' THEN 4 ELSE 5 END",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "piechart",
+      "title": "Issues by Scanner",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 4 },
+      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "options": {
+        "pieType": "pie",
+        "displayLabels": ["name", "percent"]
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT sr.scanner, COUNT(i.id) as count FROM issues i JOIN scan_results sr ON i.scan_id = sr.id WHERE i.status = 'open' GROUP BY sr.scanner ORDER BY count DESC",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "New Issues Over Time (Last 30 Days)",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 4 },
+      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT DATE_TRUNC('day', created_at) as time, severity, COUNT(*) as count FROM issues WHERE created_at >= NOW() - INTERVAL '30 days' GROUP BY 1, 2 ORDER BY 1",
+          "format": "time_series"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "barchart",
+      "title": "OWASP Top 10 Distribution",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "options": {
+        "orientation": "horizontal",
+        "xTickLabelRotation": 0,
+        "fillOpacity": 70
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COALESCE(owasp_category, 'Uncategorized') as category, COUNT(*) as count FROM issues WHERE status = 'open' AND owasp_category IS NOT NULL GROUP BY owasp_category ORDER BY count DESC LIMIT 10",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "table",
+      "title": "Recent Scan Results",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "options": {
+        "sortBy": [{ "displayName": "Started At", "desc": true }]
+      },
+      "fieldConfig": {
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "status" }, "properties": [{ "id": "custom.displayMode", "value": "color-background" }, { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] } }] }
+        ]
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT p.name as project, sr.scanner, sr.status, sr.branch, sr.started_at, sr.finished_at, COALESCE((sr.summary->>'total')::int, 0) as issues_found FROM scan_results sr JOIN projects p ON sr.project_id = p.id ORDER BY sr.started_at DESC LIMIT 20",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "table",
+      "title": "Top Issues by File",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "targets": [
+        {
+          "rawSql": "SELECT file_path, COUNT(*) as issue_count, string_agg(DISTINCT severity, ', ' ORDER BY severity) as severities FROM issues WHERE status = 'open' AND file_path IS NOT NULL GROUP BY file_path ORDER BY issue_count DESC LIMIT 15",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "table",
+      "title": "CWE Breakdown",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "targets": [
+        {
+          "rawSql": "SELECT COALESCE(cwe_id, 'Unknown') as cwe, COUNT(*) as count, string_agg(DISTINCT severity, ', ') as severities FROM issues WHERE status = 'open' GROUP BY cwe_id ORDER BY count DESC LIMIT 15",
+          "format": "table"
+        }
+      ]
+    }
+  ]
+}

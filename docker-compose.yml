@@ -1,0 +1,112 @@
+version: "3.8"
+
+services:
+
+  # ─── DATABASE ────────────────────────────────────────────────
+  sonarqube-db:
+    image: postgres:15-alpine
+    container_name: sonarqube-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgresql_data:/var/lib/postgresql/data
+    networks:
+      - sonarnet
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── SONARQUBE ───────────────────────────────────────────────
+  sonarqube:
+    image: sonarqube:10-community
+    container_name: sonarqube
+    restart: unless-stopped
+    depends_on:
+      sonarqube-db:
+        condition: service_healthy
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonarqube-db:5432/${POSTGRES_DB}
+      SONAR_JDBC_USERNAME: ${POSTGRES_USER}
+      SONAR_JDBC_PASSWORD: ${POSTGRES_PASSWORD}
+      SONAR_WEB_JAVAOPTS: -Xmx512m -Xms128m
+      SONAR_CE_JAVAOPTS: -Xmx512m -Xms128m
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_extensions:/opt/sonarqube/extensions
+    ports:
+      - "9000:9000"
+    networks:
+      - sonarnet
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
+  # ─── GRAFANA ─────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    ports:
+      - "3000:3000"
+    networks:
+      - sonarnet
+
+  # ─── BACKEND (Python FastAPI) ─────────────────────────────────
+  backend:
+    build: ./backend
+    container_name: code-review-backend
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./semgrep-rules:/semgrep-rules
+    networks:
+      - sonarnet
+    depends_on:
+      - sonarqube
+
+  # ─── NGINX (Reverse Proxy) ────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: code-review-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - sonarnet
+    depends_on:
+      - backend
+      - sonarqube
+      - grafana
+
+# ─── VOLUMES ─────────────────────────────────────────────────
+volumes:
+  postgresql_data:
+  sonarqube_data:
+  sonarqube_logs:
+  sonarqube_extensions:
+  grafana_data:
+
+# ─── NETWORKS ────────────────────────────────────────────────
+networks:
+  sonarnet:
+    driver: bridge
