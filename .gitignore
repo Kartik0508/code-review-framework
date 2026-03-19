@@ -1,2 +1,35 @@
+# Environment & secrets
 .env
 .env.local
+.env.*
+!.env.example
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Scanner artifacts
+.scannerwork/
+bandit-report.json
+semgrep-results.sarif
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
