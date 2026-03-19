@@ -27,5 +27,9 @@ COPY . ./backend/
 # Expose port
 EXPOSE 8000
 
+# Run as non-root user
+RUN useradd -r -s /bin/false appuser && chown -R appuser /app
+USER appuser
+
 # Run from /app so "backend" is importable as a package
 CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
