@@ -1,0 +1,6 @@
+projectKey=code-review-framework
+serverUrl=http://localhost:9000
+serverVersion=26.3.0.120487
+dashboardUrl=http://localhost:9000/dashboard?id=code-review-framework
+ceTaskId=ed0d26bc-ba3b-411f-8331-f9bcf4b601e4
+ceTaskUrl=http://localhost:9000/api/ce/task?id=ed0d26bc-ba3b-411f-8331-f9bcf4b601e4

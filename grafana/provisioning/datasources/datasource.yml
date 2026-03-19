@@ -3,12 +3,12 @@ apiVersion: 1
 datasources:
   - name: PostgreSQL
     type: postgres
-    uid: postgres-main
-    url: sonarqube-db:5432
-    database: sonar
-    user: sonar
+    uid: code-review-pg
+    url: localhost:5432
+    database: code_review
+    user: postgres
     secureJsonData:
-      password: sonar_secure_pass_2024
+      password: "Kartik@0026"
     jsonData:
       sslmode: disable
       maxOpenConns: 10
@@ -17,4 +17,4 @@ datasources:
       postgresVersion: 1500
       timescaledb: false
     isDefault: true
-    editable: false
+    editable: true

@@ -10,7 +10,7 @@ from backend.core.config import settings
 from backend.core.security import get_current_user, require_role
 from backend.db.database import get_db
 from backend.db.models import Issue, Project, ScanResult, User
-from backend.models.schemas import IssueResponse, IssueUpdate, ScanResultResponse
+from backend.models.schemas import IssueResponse, IssueUpdate, ScanResultResponse, ScanTrigger
 
 router = APIRouter(prefix="/scans", tags=["Scans"])
 
@@ -89,6 +89,42 @@ def update_issue(
     db.commit()
     db.refresh(issue)
     return issue
+
+
+@router.post("/trigger", response_model=ScanResultResponse, status_code=status.HTTP_201_CREATED)
+def trigger_scan(
+    project_id: UUID,
+    payload: ScanTrigger,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("admin", "reviewer")),
+):
+    project = db.query(Project).filter(Project.id == project_id, Project.is_active == True).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    scan = ScanResult(
+        project_id=project.id,
+        scanner=payload.scanner,
+        status="pending",
+        commit_sha=payload.commit_sha,
+        branch=payload.branch,
+        triggered_by=current_user.id,
+    )
+    db.add(scan)
+    db.commit()
+    db.refresh(scan)
+
+    from backend.scanners.scanner_service import ScannerService
+    service = ScannerService()
+    background_tasks.add_task(
+        service.run_scan,
+        scan_id=str(scan.id),
+        scanner_name=payload.scanner,
+        repo_path=project.repo_url,
+    )
+
+    return scan
 
 
 @router.post("/webhook/github", status_code=status.HTTP_200_OK)

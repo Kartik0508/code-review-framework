@@ -14,7 +14,7 @@
       "type": "stat",
       "title": "Total Open Issues",
       "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
-      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "datasource": { "type": "postgres", "uid": "afghqupnzdvk0e" },
       "options": {
         "colorMode": "background",
         "graphMode": "none",
@@ -35,7 +35,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT COUNT(*) as \"Total Open Issues\" FROM issues WHERE status = 'open'",
+          "rawSql": "SELECT COUNT(*) as \"Total Open Issues\" FROM public.issues WHERE status = 'open'",
           "format": "table"
         }
       ]
@@ -45,7 +45,7 @@
       "type": "stat",
       "title": "Critical Issues",
       "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
-      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "datasource": { "type": "postgres", "uid": "afghqupnzdvk0e" },
       "options": {
         "colorMode": "background",
         "graphMode": "none",
@@ -66,7 +66,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT COUNT(*) as \"Critical Issues\" FROM issues WHERE status = 'open' AND severity = 'CRITICAL'",
+          "rawSql": "SELECT COUNT(*) as \"Critical Issues\" FROM public.issues WHERE status = 'open' AND severity = 'CRITICAL'",
           "format": "table"
         }
       ]
@@ -76,7 +76,7 @@
       "type": "stat",
       "title": "High Issues",
       "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
-      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "datasource": { "type": "postgres", "uid": "afghqupnzdvk0e" },
       "options": {
         "colorMode": "background",
         "graphMode": "none",
@@ -97,7 +97,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT COUNT(*) as \"High Issues\" FROM issues WHERE status = 'open' AND severity = 'HIGH'",
+          "rawSql": "SELECT COUNT(*) as \"High Issues\" FROM public.issues WHERE status = 'open' AND severity = 'HIGH'",
           "format": "table"
         }
       ]
@@ -107,7 +107,7 @@
       "type": "stat",
       "title": "Total Scans Run",
       "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
-      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "datasource": { "type": "postgres", "uid": "afghqupnzdvk0e" },
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -124,7 +124,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT COUNT(*) as \"Total Scans\" FROM scan_results WHERE status = 'completed'",
+          "rawSql": "SELECT COUNT(*) as \"Total Scans\" FROM public.scan_results WHERE status = 'completed'",
           "format": "table"
         }
       ]
@@ -134,7 +134,7 @@
       "type": "stat",
       "title": "Projects Monitored",
       "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
-      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "datasource": { "type": "postgres", "uid": "afghqupnzdvk0e" },
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -151,7 +151,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT COUNT(*) as \"Projects\" FROM projects WHERE is_active = true",
+          "rawSql": "SELECT COUNT(*) as \"Projects\" FROM public.projects WHERE is_active = true",
           "format": "table"
         }
       ]
@@ -161,7 +161,7 @@
       "type": "barchart",
       "title": "Issues by Severity",
       "gridPos": { "h": 8, "w": 8, "x": 0, "y": 4 },
-      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "datasource": { "type": "postgres", "uid": "afghqupnzdvk0e" },
       "options": {
         "orientation": "vertical",
         "xTickLabelRotation": 0,
@@ -180,7 +180,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT severity, COUNT(*) as count FROM issues WHERE status = 'open' GROUP BY severity ORDER BY CASE severity WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'MEDIUM' THEN 3 WHEN 'LOW' THEN 4 ELSE 5 END",
+          "rawSql": "SELECT severity, COUNT(*) as count FROM public.issues WHERE status = 'open' GROUP BY severity ORDER BY CASE severity WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'MEDIUM' THEN 3 WHEN 'LOW' THEN 4 ELSE 5 END",
           "format": "table"
         }
       ]
@@ -190,14 +190,14 @@
       "type": "piechart",
       "title": "Issues by Scanner",
       "gridPos": { "h": 8, "w": 8, "x": 8, "y": 4 },
-      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "datasource": { "type": "postgres", "uid": "afghqupnzdvk0e" },
       "options": {
         "pieType": "pie",
         "displayLabels": ["name", "percent"]
       },
       "targets": [
         {
-          "rawSql": "SELECT sr.scanner, COUNT(i.id) as count FROM issues i JOIN scan_results sr ON i.scan_id = sr.id WHERE i.status = 'open' GROUP BY sr.scanner ORDER BY count DESC",
+          "rawSql": "SELECT sr.scanner, COUNT(i.id) as count FROM public.issues i JOIN public.scan_results sr ON i.scan_id = sr.id WHERE i.status = 'open' GROUP BY sr.scanner ORDER BY count DESC",
           "format": "table"
         }
       ]
@@ -207,14 +207,14 @@
       "type": "timeseries",
       "title": "New Issues Over Time (Last 30 Days)",
       "gridPos": { "h": 8, "w": 8, "x": 16, "y": 4 },
-      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "datasource": { "type": "postgres", "uid": "afghqupnzdvk0e" },
       "options": {
         "tooltip": { "mode": "multi" },
         "legend": { "displayMode": "list", "placement": "bottom" }
       },
       "targets": [
         {
-          "rawSql": "SELECT DATE_TRUNC('day', created_at) as time, severity, COUNT(*) as count FROM issues WHERE created_at >= NOW() - INTERVAL '30 days' GROUP BY 1, 2 ORDER BY 1",
+          "rawSql": "SELECT DATE_TRUNC('day', created_at) as time, severity, COUNT(*) as count FROM public.issues WHERE created_at >= NOW() - INTERVAL '30 days' GROUP BY 1, 2 ORDER BY 1",
           "format": "time_series"
         }
       ]
@@ -224,7 +224,7 @@
       "type": "barchart",
       "title": "OWASP Top 10 Distribution",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
-      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "datasource": { "type": "postgres", "uid": "afghqupnzdvk0e" },
       "options": {
         "orientation": "horizontal",
         "xTickLabelRotation": 0,
@@ -232,7 +232,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT COALESCE(owasp_category, 'Uncategorized') as category, COUNT(*) as count FROM issues WHERE status = 'open' AND owasp_category IS NOT NULL GROUP BY owasp_category ORDER BY count DESC LIMIT 10",
+          "rawSql": "SELECT COALESCE(owasp_category, 'Uncategorized') as category, COUNT(*) as count FROM public.issues WHERE status = 'open' AND owasp_category IS NOT NULL GROUP BY owasp_category ORDER BY count DESC LIMIT 10",
           "format": "table"
         }
       ]
@@ -242,7 +242,7 @@
       "type": "table",
       "title": "Recent Scan Results",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
-      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "datasource": { "type": "postgres", "uid": "afghqupnzdvk0e" },
       "options": {
         "sortBy": [{ "displayName": "Started At", "desc": true }]
       },
@@ -253,7 +253,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT p.name as project, sr.scanner, sr.status, sr.branch, sr.started_at, sr.finished_at, COALESCE((sr.summary->>'total')::int, 0) as issues_found FROM scan_results sr JOIN projects p ON sr.project_id = p.id ORDER BY sr.started_at DESC LIMIT 20",
+          "rawSql": "SELECT p.name as project, sr.scanner, sr.status, sr.branch, sr.started_at, sr.finished_at, COALESCE((sr.summary->>'total')::int, 0) as issues_found FROM public.scan_results sr JOIN public.projects p ON sr.project_id = p.id ORDER BY sr.started_at DESC LIMIT 20",
           "format": "table"
         }
       ]
@@ -263,10 +263,10 @@
       "type": "table",
       "title": "Top Issues by File",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
-      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "datasource": { "type": "postgres", "uid": "afghqupnzdvk0e" },
       "targets": [
         {
-          "rawSql": "SELECT file_path, COUNT(*) as issue_count, string_agg(DISTINCT severity, ', ' ORDER BY severity) as severities FROM issues WHERE status = 'open' AND file_path IS NOT NULL GROUP BY file_path ORDER BY issue_count DESC LIMIT 15",
+          "rawSql": "SELECT file_path, COUNT(*) as issue_count, string_agg(DISTINCT severity, ', ' ORDER BY severity) as severities FROM public.issues WHERE status = 'open' AND file_path IS NOT NULL GROUP BY file_path ORDER BY issue_count DESC LIMIT 15",
           "format": "table"
         }
       ]
@@ -276,10 +276,10 @@
       "type": "table",
       "title": "CWE Breakdown",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
-      "datasource": { "type": "postgres", "uid": "postgres-main" },
+      "datasource": { "type": "postgres", "uid": "afghqupnzdvk0e" },
       "targets": [
         {
-          "rawSql": "SELECT COALESCE(cwe_id, 'Unknown') as cwe, COUNT(*) as count, string_agg(DISTINCT severity, ', ') as severities FROM issues WHERE status = 'open' GROUP BY cwe_id ORDER BY count DESC LIMIT 15",
+          "rawSql": "SELECT COALESCE(cwe_id, 'Unknown') as cwe, COUNT(*) as count, string_agg(DISTINCT severity, ', ') as severities FROM public.issues WHERE status = 'open' GROUP BY cwe_id ORDER BY count DESC LIMIT 15",
           "format": "table"
         }
       ]
