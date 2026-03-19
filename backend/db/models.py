@@ -73,7 +73,7 @@ class Issue(Base):
     file_path = Column(String(1000), nullable=True)
     line_start = Column(Integer, nullable=True)
     line_end = Column(Integer, nullable=True)
-    cwe_id = Column(String(50), nullable=True)
+    cwe_id = Column(String(200), nullable=True)
     owasp_category = Column(String(100), nullable=True)
     remediation = Column(Text, nullable=True)
     status = Column(String(50), nullable=False, default="open")  # open/resolved/false_positive
