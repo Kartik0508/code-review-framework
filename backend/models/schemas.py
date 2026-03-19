@@ -67,9 +67,9 @@ class ProjectResponse(BaseModel):
 
     id: UUID
     name: str
-    description: Optional[str]
-    repo_url: Optional[str]
-    sonarqube_project_key: Optional[str]
+    description: Optional[str] = None
+    repo_url: Optional[str] = None
+    sonarqube_project_key: Optional[str] = None
     created_by: UUID
     created_at: datetime
     is_active: bool
@@ -90,13 +90,13 @@ class ScanResultResponse(BaseModel):
     project_id: UUID
     scanner: str
     status: str
-    triggered_by: Optional[UUID]
-    commit_sha: Optional[str]
-    branch: Optional[str]
-    started_at: Optional[datetime]
-    finished_at: Optional[datetime]
-    summary: Optional[dict[str, Any]]
-    raw_results: Optional[dict[str, Any]]
+    triggered_by: Optional[UUID] = None
+    commit_sha: Optional[str] = None
+    branch: Optional[str] = None
+    started_at: Optional[datetime] = None
+    finished_at: Optional[datetime] = None
+    summary: Optional[dict[str, Any]] = None
+    raw_results: Optional[dict[str, Any]] = None
 
 
 class IssueResponse(BaseModel):
@@ -107,13 +107,13 @@ class IssueResponse(BaseModel):
     rule_id: str
     severity: str
     title: str
-    description: Optional[str]
-    file_path: Optional[str]
-    line_start: Optional[int]
-    line_end: Optional[int]
-    cwe_id: Optional[str]
-    owasp_category: Optional[str]
-    remediation: Optional[str]
+    description: Optional[str] = None
+    file_path: Optional[str] = None
+    line_start: Optional[int] = None
+    line_end: Optional[int] = None
+    cwe_id: Optional[str] = None
+    owasp_category: Optional[str] = None
+    remediation: Optional[str] = None
     status: str
     created_at: datetime
 

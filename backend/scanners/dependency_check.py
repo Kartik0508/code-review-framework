@@ -6,6 +6,8 @@ import shutil
 import tempfile
 from typing import Optional
 
+import aiofiles
+
 from loguru import logger
 
 from backend.scanners.base import BaseScanner, IssueData, ScanOutput
@@ -122,7 +124,7 @@ class DependencyCheckScanner(BaseScanner):
             return await self._run_odc(dc_bin, scan_target, scan_id)
 
         # Fallback: manual requirements.txt / package.json check
-        return await self._fallback_scan(scan_target)
+        return self._fallback_scan(scan_target)
 
     async def _run_odc(self, binary: str, scan_target: str, scan_id: str) -> ScanOutput:
         report_dir = os.path.join(tempfile.gettempdir(), f"odc_{scan_id}")
@@ -154,8 +156,8 @@ class DependencyCheckScanner(BaseScanner):
         if not os.path.exists(report_path):
             return ScanOutput(scanner=self.name, status="failed", error="Dependency-Check report not generated")
 
-        with open(report_path) as f:
-            data = json.load(f)
+        async with aiofiles.open(report_path) as f:
+            data = json.loads(await f.read())
 
         issue_data: list[IssueData] = []
         for dep in data.get("dependencies", []):
@@ -179,43 +181,47 @@ class DependencyCheckScanner(BaseScanner):
         output.compute_summary()
         return output
 
-    async def _fallback_scan(self, scan_target: str) -> ScanOutput:
-        """Simplified fallback that checks requirements.txt and package.json."""
-        logger.info("OWASP Dependency-Check not found, using built-in CVE database fallback")
-        issue_data: list[IssueData] = []
-
+    def _load_packages(self, scan_target: str) -> dict[str, str]:
         packages: dict[str, str] = {}
-
         req_path = os.path.join(scan_target, "requirements.txt")
         if os.path.exists(req_path):
             try:
                 packages.update(_parse_requirements_txt(req_path))
             except Exception as exc:
                 logger.warning(f"Failed to parse requirements.txt: {exc}")
-
         pkg_path = os.path.join(scan_target, "package.json")
         if os.path.exists(pkg_path):
             try:
                 packages.update(_parse_package_json(pkg_path))
             except Exception as exc:
                 logger.warning(f"Failed to parse package.json: {exc}")
+        return packages
 
-        for pkg_name, installed_version in packages.items():
-            if pkg_name in KNOWN_VULNERABLE:
-                for constraint, cve, severity, description in KNOWN_VULNERABLE[pkg_name]:
-                    try:
-                        if _version_matches(installed_version, constraint):
-                            issue_data.append(IssueData(
-                                rule_id=cve,
-                                severity=severity,
-                                title=f"Vulnerable dependency: {pkg_name}=={installed_version} ({cve})",
-                                description=f"{description}. Installed: {installed_version}, constraint: {constraint}",
-                                cwe_id="CWE-1035",
-                                owasp_category="A06:2021 - Vulnerable and Outdated Components",
-                                remediation=REMEDIATION,
-                            ))
-                    except Exception:
-                        pass  # Skip unparseable version strings
+    def _check_package_vulnerabilities(self, pkg_name: str, installed_version: str) -> list[IssueData]:
+        issues: list[IssueData] = []
+        for constraint, cve, severity, description in KNOWN_VULNERABLE.get(pkg_name, []):
+            try:
+                if _version_matches(installed_version, constraint):
+                    issues.append(IssueData(
+                        rule_id=cve,
+                        severity=severity,
+                        title=f"Vulnerable dependency: {pkg_name}=={installed_version} ({cve})",
+                        description=f"{description}. Installed: {installed_version}, constraint: {constraint}",
+                        cwe_id="CWE-1035",
+                        owasp_category="A06:2021 - Vulnerable and Outdated Components",
+                        remediation=REMEDIATION,
+                    ))
+            except Exception:
+                pass
+        return issues
+
+    def _fallback_scan(self, scan_target: str) -> ScanOutput:
+        """Simplified fallback that checks requirements.txt and package.json."""
+        logger.info("OWASP Dependency-Check not found, using built-in CVE database fallback")
+        issue_data: list[IssueData] = []
+
+        for pkg_name, installed_version in self._load_packages(scan_target).items():
+            issue_data.extend(self._check_package_vulnerabilities(pkg_name, installed_version))
 
         output = ScanOutput(scanner=self.name, status="completed", issues=issue_data)
         output.compute_summary()

@@ -5,6 +5,8 @@ import shutil
 import tempfile
 from typing import Optional
 
+import aiofiles
+
 from loguru import logger
 
 from backend.scanners.base import BaseScanner, IssueData, ScanOutput
@@ -36,17 +38,16 @@ class GitleaksScanner(BaseScanner):
 
         if is_git_repo:
             cmd = [
-                "gitleaks", "detect",
-                "--source", scan_target,
+                "gitleaks", "git",
+                scan_target,
                 "--report-format", "json",
                 "--report-path", report_file,
                 "--exit-code", "0",
             ]
         else:
             cmd = [
-                "gitleaks", "detect",
-                "--source", scan_target,
-                "--no-git",
+                "gitleaks", "dir",
+                scan_target,
                 "--report-format", "json",
                 "--report-path", report_file,
                 "--exit-code", "0",
@@ -67,8 +68,8 @@ class GitleaksScanner(BaseScanner):
         findings = []
         if os.path.exists(report_file):
             try:
-                with open(report_file) as f:
-                    content = f.read().strip()
+                async with aiofiles.open(report_file) as f:
+                    content = (await f.read()).strip()
                     if content:
                         findings = json.loads(content)
                     if isinstance(findings, dict):
