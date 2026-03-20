@@ -32,7 +32,10 @@ class SemgrepScanner(BaseScanner):
         # Use local path if it's a directory; skip remote git URLs for semgrep
         scan_target = repo_path if os.path.isdir(repo_path) else "."
 
-        cmd = ["semgrep", "--json", "--quiet", "--no-git-ignore"]
+        cmd = ["semgrep", "--json", "--quiet", "--no-git-ignore",
+               "--exclude", ".venv", "--exclude", "venv", "--exclude", "env",
+               "--exclude", "node_modules", "--exclude", "*.min.js",
+               "--exclude", "*.md", "--exclude", "*.txt", "--exclude", "*.rst"]
         for cfg in configs:
             cmd += ["--config", cfg]
         cmd.append(scan_target)

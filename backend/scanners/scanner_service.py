@@ -70,13 +70,18 @@ class ScannerService:
 
             # Persist issues
             for issue_data in output.issues:
+                # Strip the temp clone prefix to store relative file paths
+                file_path = issue_data.file_path
+                if file_path and scan_target and file_path.startswith(scan_target):
+                    file_path = file_path[len(scan_target):].lstrip("/")
+
                 issue = Issue(
                     scan_id=scan_id,
                     rule_id=issue_data.rule_id,
                     severity=issue_data.severity,
                     title=issue_data.title,
                     description=issue_data.description,
-                    file_path=issue_data.file_path,
+                    file_path=file_path,
                     line_start=issue_data.line_start,
                     line_end=issue_data.line_end,
                     cwe_id=issue_data.cwe_id,

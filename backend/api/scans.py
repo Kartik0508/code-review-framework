@@ -174,7 +174,7 @@ async def github_webhook(
     from backend.scanners.scanner_service import ScannerService
     service = ScannerService()
 
-    for scanner_name in ["semgrep", "bandit", "gitleaks"]:
+    for scanner_name in ["semgrep", "bandit", "gitleaks", "dependency-check", "sonarqube"]:
         scan = ScanResult(
             project_id=project.id,
             scanner=scanner_name,
