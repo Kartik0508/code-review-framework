@@ -3,6 +3,7 @@ from .semgrep_scanner import SemgrepScanner
 from .bandit_scanner import BanditScanner
 from .gitleaks_scanner import GitleaksScanner
 from .dependency_check import DependencyCheckScanner
+from .eslint_scanner import ESLintScanner
 
 ScannerRegistry = {
     "sonarqube": SonarQubeScanner,
@@ -10,4 +11,5 @@ ScannerRegistry = {
     "bandit": BanditScanner,
     "gitleaks": GitleaksScanner,
     "dependency-check": DependencyCheckScanner,
+    "eslint": ESLintScanner,
 }

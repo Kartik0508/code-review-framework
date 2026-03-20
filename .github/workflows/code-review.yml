@@ -152,6 +152,88 @@ jobs:
           path: reports/
           retention-days: 30
 
+  # ── ESLint + Node.js Security Rules ────────────────────────────────────────
+  eslint:
+    name: ESLint Security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for JS/TS files
+        id: check-js
+        run: |
+          if find . -name "*.js" -o -name "*.mjs" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" \
+             | grep -v node_modules | grep -v .git | grep -q .; then
+            echo "has_js=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_js=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Node.js
+        if: steps.check-js.outputs.has_js == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install ESLint and security plugin
+        if: steps.check-js.outputs.has_js == 'true'
+        run: npm install --save-dev eslint@8 eslint-plugin-security
+
+      - name: Create ESLint security config
+        if: steps.check-js.outputs.has_js == 'true'
+        run: |
+          cat > .eslintrc-security.json << 'EOF'
+          {
+            "plugins": ["security"],
+            "extends": ["plugin:security/recommended"],
+            "env": {"node": true, "es2021": true},
+            "parserOptions": {"ecmaVersion": 2021},
+            "rules": {
+              "no-eval": "error",
+              "no-implied-eval": "error",
+              "no-new-func": "error"
+            }
+          }
+          EOF
+
+      - name: Run ESLint security scan
+        if: steps.check-js.outputs.has_js == 'true'
+        run: |
+          npx eslint \
+            --no-eslintrc \
+            -c .eslintrc-security.json \
+            --ext .js,.mjs,.cjs,.jsx,.ts,.tsx \
+            --format json \
+            --no-error-on-unmatched-pattern \
+            --ignore-pattern node_modules/ \
+            . > eslint-report.json || true
+
+      - name: Fail on HIGH severity ESLint findings
+        if: steps.check-js.outputs.has_js == 'true'
+        run: |
+          node -e "
+          const fs = require('fs');
+          const data = JSON.parse(fs.readFileSync('eslint-report.json', 'utf8'));
+          const errors = data.flatMap(f => f.messages.filter(m => m.severity === 2));
+          if (errors.length > 0) {
+            console.log('Found ' + errors.length + ' ESLint security errors:');
+            errors.slice(0, 10).forEach(e =>
+              console.log('  [' + e.ruleId + '] ' + e.message + ' (line ' + e.line + ')')
+            );
+            process.exit(1);
+          } else {
+            console.log('ESLint: no security errors found');
+          }
+          "
+
+      - name: Upload ESLint report
+        if: always() && steps.check-js.outputs.has_js == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: eslint-report
+          path: eslint-report.json
+          retention-days: 30
+
   # ── CodeQL Analysis ────────────────────────────────────────────────────────
   codeql:
     name: CodeQL Analysis
@@ -181,7 +263,7 @@ jobs:
   notify-framework:
     name: Notify Code Review Framework
     runs-on: ubuntu-latest
-    needs: [semgrep, bandit, gitleaks, dependency-check]
+    needs: [semgrep, bandit, gitleaks, dependency-check, eslint]
     if: always()
     steps:
       - name: Send scan results to framework
@@ -189,7 +271,8 @@ jobs:
           STATUS="completed"
           if [ "${{ needs.semgrep.result }}" == "failure" ] || \
              [ "${{ needs.bandit.result }}" == "failure" ] || \
-             [ "${{ needs.gitleaks.result }}" == "failure" ]; then
+             [ "${{ needs.gitleaks.result }}" == "failure" ] || \
+             [ "${{ needs.eslint.result }}" == "failure" ]; then
             STATUS="failed"
           fi
 

@@ -191,6 +191,7 @@ async def github_webhook(
             scan_id=str(scan.id),
             scanner_name=scanner_name,
             repo_path=repo_url,
+            project_name=project.name,
         )
 
     return {"message": f"Triggered scans for project '{project.name}'", "branch": branch, "commit": commit_sha}
