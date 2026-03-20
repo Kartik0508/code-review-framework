@@ -122,6 +122,32 @@ class IssueUpdate(BaseModel):
     status: str  # open/resolved/false_positive
 
 
+class CommentCreate(BaseModel):
+    body: str
+
+
+class CommentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    issue_id: UUID
+    user_id: UUID
+    body: str
+    created_at: datetime
+    author_username: Optional[str] = None
+
+    @classmethod
+    def from_orm_with_author(cls, comment) -> "CommentResponse":
+        return cls(
+            id=comment.id,
+            issue_id=comment.issue_id,
+            user_id=comment.user_id,
+            body=comment.body,
+            created_at=comment.created_at,
+            author_username=comment.author.username if comment.author else None,
+        )
+
+
 # ── Reports ───────────────────────────────────────────────────────────────────
 
 class ReportFilter(BaseModel):

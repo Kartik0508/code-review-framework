@@ -80,6 +80,20 @@ class Issue(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     scan = relationship("ScanResult", back_populates="issues")
+    comments = relationship("IssueComment", back_populates="issue", cascade="all, delete-orphan")
+
+
+class IssueComment(Base):
+    __tablename__ = "issue_comments"
+
+    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    issue_id = Column(PG_UUID(as_uuid=True), ForeignKey("issues.id"), nullable=False, index=True)
+    user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    body = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    issue = relationship("Issue", back_populates="comments")
+    author = relationship("User")
 
 
 class AuditLog(Base):

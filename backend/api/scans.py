@@ -9,8 +9,8 @@ from sqlalchemy.orm import Session
 from backend.core.config import settings
 from backend.core.security import get_current_user, require_role
 from backend.db.database import get_db
-from backend.db.models import Issue, Project, ScanResult, User
-from backend.models.schemas import IssueResponse, IssueUpdate, ScanResultResponse, ScanTrigger
+from backend.db.models import Issue, IssueComment, Project, ScanResult, User
+from backend.models.schemas import CommentCreate, CommentResponse, IssueResponse, IssueUpdate, ScanResultResponse, ScanTrigger
 
 router = APIRouter(prefix="/scans", tags=["Scans"])
 
@@ -194,3 +194,66 @@ async def github_webhook(
         )
 
     return {"message": f"Triggered scans for project '{project.name}'", "branch": branch, "commit": commit_sha}
+
+
+# ── Issue Comments ─────────────────────────────────────────────────────────────
+
+@router.post("/{scan_id}/issues/{issue_id}/comments", response_model=CommentResponse, status_code=status.HTTP_201_CREATED)
+def add_comment(
+    scan_id: UUID,
+    issue_id: UUID,
+    payload: CommentCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    issue = db.query(Issue).filter(Issue.id == issue_id, Issue.scan_id == scan_id).first()
+    if not issue:
+        raise HTTPException(status_code=404, detail="Issue not found")
+
+    comment = IssueComment(
+        issue_id=issue_id,
+        user_id=current_user.id,
+        body=payload.body,
+    )
+    db.add(comment)
+    db.commit()
+    db.refresh(comment)
+    return CommentResponse.from_orm_with_author(comment)
+
+
+@router.get("/{scan_id}/issues/{issue_id}/comments", response_model=list[CommentResponse])
+def get_comments(
+    scan_id: UUID,
+    issue_id: UUID,
+    db: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
+):
+    issue = db.query(Issue).filter(Issue.id == issue_id, Issue.scan_id == scan_id).first()
+    if not issue:
+        raise HTTPException(status_code=404, detail="Issue not found")
+
+    comments = db.query(IssueComment).filter(IssueComment.issue_id == issue_id).order_by(IssueComment.created_at).all()
+    return [CommentResponse.from_orm_with_author(c) for c in comments]
+
+
+@router.delete("/{scan_id}/issues/{issue_id}/comments/{comment_id}", status_code=status.HTTP_200_OK)
+def delete_comment(
+    scan_id: UUID,
+    issue_id: UUID,
+    comment_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    comment = db.query(IssueComment).filter(
+        IssueComment.id == comment_id,
+        IssueComment.issue_id == issue_id,
+    ).first()
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+
+    if current_user.role != "admin" and comment.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this comment")
+
+    db.delete(comment)
+    db.commit()
+    return {"message": "Comment deleted"}
