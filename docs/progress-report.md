@@ -1,6 +1,6 @@
-l# Secure Code Review Framework — Progress Report
+# Secure Code Review Framework — Progress Report
 
-**Date:** 19 March 2026
+**Date:** 20 March 2026
 **Author:** Kartik
 **Project:** Implementing a Secure Framework for a Code Review Tool
 **Assigned On:** 1 March 2026
@@ -169,7 +169,7 @@ Projects:            1 (code-review-framework itself)
 
 ### 4.1 Technical Features
 
-#### Issue Commenting (Task 7 — Not Built)
+#### Issue Commenting (Task 7 — Done)
 **What it is:** Team members cannot currently add comments on specific issues
 (e.g., "This is a false positive because...", "Fixed in commit abc123").
 
@@ -301,7 +301,7 @@ public URL — enabling 24/7 webhook functionality without needing your machine 
 | Task 6 | Grafana dashboard (7 panels, live data) | Done |
 | Task 6 | CSV export + compliance + trend reports | Done |
 | Task 7 | Issue status tracking (open/resolved/false positive) | Done |
-| Task 7 | Issue commenting for team collaboration | Not Built |
+| Task 7 | Issue commenting for team collaboration | Done |
 | Task 7 | Custom rule creation via API | Not Built |
 | Task 8 | Performance optimization documentation | Not Written |
 | — | All 7 deliverable documents | Not Written |
