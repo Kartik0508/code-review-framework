@@ -177,7 +177,6 @@ rules:
     pattern-either:
       - pattern: requests.get(request.$FIELD, ...)
       - pattern: requests.post(request.$FIELD, ...)
-      - pattern: requests.get($URL, ...) where $URL comes from user input
       - pattern: httpx.get(request.$FIELD, ...)
     metadata:
       cwe: ["CWE-918"]

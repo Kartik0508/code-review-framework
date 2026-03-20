@@ -8,7 +8,7 @@ from loguru import logger
 from backend.scanners.base import BaseScanner, IssueData, OWASP_MAPPING, REMEDIATION_TEMPLATES, ScanOutput
 
 DEFAULT_RULES = ["p/owasp-top-ten", "p/python", "p/javascript"]
-CUSTOM_RULES_PATH = "/semgrep-rules"
+CUSTOM_RULES_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "semgrep-rules"))
 
 SEMGREP_SEVERITY_MAP = {
     "ERROR": "HIGH",

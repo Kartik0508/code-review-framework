@@ -83,11 +83,11 @@ rules:
       Hardcoded password or credential in source code. Use a secrets manager or
       externalized configuration (environment variables, Vault, AWS Secrets Manager).
     patterns:
-      - pattern: String $VAR = "..."
+      - pattern: $VAR = "..."
       - metavariable-regex:
           metavariable: $VAR
           regex: (?i)(password|passwd|secret|apiKey|api_key|token|credential)
-      - pattern-not: String $VAR = ""
+      - pattern-not: $VAR = ""
     metadata:
       cwe: ["CWE-259", "CWE-798"]
       owasp: ["A07:2021 - Identification and Authentication Failures"]

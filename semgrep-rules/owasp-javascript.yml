@@ -138,7 +138,7 @@ rules:
       use the 'none' algorithm to forge tokens. Always specify algorithms: ['HS256'].
     patterns:
       - pattern: jwt.verify($TOKEN, $SECRET)
-      - pattern-not: jwt.verify($TOKEN, $SECRET, {algorithms: [...]}, ...)
+      - pattern-not: jwt.verify($TOKEN, $SECRET, $OPTIONS, ...)
     metadata:
       cwe: ["CWE-347"]
       owasp: ["A07:2021 - Identification and Authentication Failures"]
